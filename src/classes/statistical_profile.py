@@ -1,5 +1,4 @@
 import numpy as np
-from utils.matrices import normalize_matrix, get_frequencies
 from utils.data import load_matrix, matrix_exists, save_matrix
 from classes.cipher import Cipher
 from collections import Counter
@@ -24,13 +23,13 @@ class StatisticalProfile:
 	@property
 	def p_row_normalized(self) -> np.ndarray:
 		if self._p_row_normalized is None:
-			self._p_row_normalized = normalize_matrix(self.p_raw, axis=1)
+			self._p_row_normalized = self._normalize_matrix(self.p_raw, axis=1)
 		return self._p_row_normalized
 
 	@property
 	def p_col_normalized(self) -> np.ndarray:
 		if self._p_col_normalized is None:
-			self._p_col_normalized = normalize_matrix(self.p_raw, axis=0)
+			self._p_col_normalized = self._normalize_matrix(self.p_raw, axis=0)
 		return self._p_col_normalized
 
 	@property
@@ -42,6 +41,10 @@ class StatisticalProfile:
 	def _get_frequencies(self) -> np.ndarray:
 		p_sums = self.p_raw.sum(axis=1)
 		return p_sums / p_sums.sum()
+
+	def _normalize_matrix(self, P: np.ndarray, axis=0) -> np.ndarray:
+		P = P / P.sum(axis=axis, keepdims=True)
+		return P
 
 	@staticmethod
 	def from_matrix_file(matrix_file: str):
