@@ -1,5 +1,4 @@
-from classes.relaxation_solver import RelaxationSolver
-from classes.cipher import Cipher
+from classes import RelaxationSolver, Cipher
 from utils.logging import get_colored_logger
 import numpy as np
 

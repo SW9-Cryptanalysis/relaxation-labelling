@@ -1,9 +1,10 @@
 import numpy as np
 import logging
 from utils.logging import get_colored_logger
-from classes.statistical_profile import StatisticalProfile
-from classes.cipher import Cipher
 from classes.solver_config import SolverConfig
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from classes import StatisticalProfile, Cipher
 
 log = get_colored_logger("Relaxation Solver")
 
@@ -16,9 +17,9 @@ class RelaxationSolver:
 
 	def __init__(
 		self,
-		eng_profile: StatisticalProfile,
-		cip_profile: StatisticalProfile,
-		cipher: Cipher,
+		eng_profile: "StatisticalProfile",
+		cip_profile: "StatisticalProfile",
+		cipher: "Cipher",
 		config: SolverConfig = SolverConfig(),
 	):
 		self.eng_profile = eng_profile
@@ -56,7 +57,9 @@ class RelaxationSolver:
 				)
 
 		# Normalize rows to sum to 1
-		self.p_map = self.p_map / (self.p_map.sum(axis=1, keepdims=True) + self.config.epsilon)
+		self.p_map = self.p_map / (
+			self.p_map.sum(axis=1, keepdims=True) + self.config.epsilon
+		)
 
 	def run(self, valid_key: dict[int, int] | None = None) -> None:
 		"""
@@ -80,12 +83,18 @@ class RelaxationSolver:
 			total_support = support_successor + support_predecessor
 
 			# --- Update Step ---
-			lr = self.config.lr_phase1 if i < self.config.lock_iteration else self.config.lr_phase2
+			lr = (
+				self.config.lr_phase1
+				if i < self.config.lock_iteration
+				else self.config.lr_phase2
+			)
 			p_map_new = self.p_map * (1 + lr * total_support)
 
 			# --- Balance Step (to match unigram frequencies) ---
 			balance_power = (
-				self.config.balance_phase1 if i < self.config.lock_iteration else self.config.balance_phase2
+				self.config.balance_phase1
+				if i < self.config.lock_iteration
+				else self.config.balance_phase2
 			)
 			col_sums = p_map_new.sum(axis=0) + self.config.epsilon
 			balance_factor = (
@@ -106,9 +115,7 @@ class RelaxationSolver:
 			# --- Log Accuracy (if true key is known) ---
 			if i % 50 == 0 and valid_key:
 				temp_guesses = np.argmax(self.p_map, axis=1)
-				correct = sum(
-					1 for c, e in valid_key.items() if temp_guesses[c] == e
-				)
+				correct = sum(1 for c, e in valid_key.items() if temp_guesses[c] == e)
 				log.debug(f"Iter {i:3d}: Acc {100 * correct / len(valid_key):.1f}%")
 
 		# --- Finalize results ---
