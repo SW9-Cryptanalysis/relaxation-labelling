@@ -1,10 +1,15 @@
 import numpy as np
 import pandas as pd
-from utils.constants import DATA_PATH, CIPHER_PATH
+from utils.constants import DATA_PATH, CIPHER_PATH, RESULT_PATH
 import os
 import json
 from typing import Any
 from utils.logging import get_colored_logger
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from classes.solver_analytics import SolverAnalytics
+    from classes.relaxation_solver import RelaxationSolver
+    from classes.cipher import Cipher
 
 log = get_colored_logger("Relaxation Solver")
 
@@ -28,3 +33,15 @@ def save_matrix(data, index, columns, path):
     
 def matrix_exists(path) -> bool:
     return os.path.exists(DATA_PATH + path)
+
+def write_results_to_file (analytics: "SolverAnalytics", solver: "RelaxationSolver", cipher: "Cipher"):
+	if not os.path.exists(RESULT_PATH):
+		os.makedirs(RESULT_PATH)
+	with open(f"{RESULT_PATH}/{cipher.name}.txt", "w") as f:
+		f.write(f"SER: {analytics.ser:.4f}\n")
+		f.write(f"MER: {analytics.mer:.4f}\n")
+		f.write(f"Plaintext: {cipher.plaintext}\n")
+		f.write(f"Decoded: {solver.decoded}\n")
+  
+def load_ciphers_list() -> list[str]:
+	return os.listdir(CIPHER_PATH)
