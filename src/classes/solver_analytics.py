@@ -1,6 +1,8 @@
 from classes import RelaxationSolver, Cipher
 from utils.logging import get_colored_logger
 import numpy as np
+from typing import Any
+import json
 
 log = get_colored_logger("Relaxation Solver")
 
@@ -96,3 +98,23 @@ class SolverAnalytics:
 		correct = sum(1 for d, a in zip(self.solver.decoded, self.cipher.plaintext) if d == a)
 		self._ser = 1.0 - (correct / len(self.solver.decoded))
 		return self._ser
+
+	def __str__(self) -> str:
+		return (
+			f"SolverAnalytics {{\n  solver: {self.solver.__str__()}\n  cipher: {self.cipher.__str__()}\n}}"
+		)
+
+	def __json__(self) -> dict[str, Any]:
+		return {
+			"solver": self.solver.__json__(),
+			"cipher": self.cipher.__json__(),
+		}
+  
+	@staticmethod
+	def __from_json__(json: dict[str, Any]) -> "SolverAnalytics":
+		solver = RelaxationSolver.__from_json__(json["solver"])
+		cipher = Cipher.__from_json__(json["cipher"])
+
+		analytics = SolverAnalytics(solver, cipher)
+
+		return analytics

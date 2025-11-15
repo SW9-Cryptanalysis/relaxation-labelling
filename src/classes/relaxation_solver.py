@@ -2,7 +2,8 @@ import numpy as np
 import logging
 from utils.logging import get_colored_logger
 from classes.solver_config import SolverConfig
-from typing import TYPE_CHECKING
+import time
+from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from classes import StatisticalProfile, Cipher
 
@@ -26,6 +27,8 @@ class RelaxationSolver:
 		self.cip_profile = cip_profile
 		self.cipher = cipher
 		self.config = config
+
+		self.time = 0.0
 
 		self.cip_size = cip_profile.size
 		self.eng_size = eng_profile.size
@@ -65,6 +68,7 @@ class RelaxationSolver:
 		"""
 		Runs the relaxation algorithm for a given number of iterations.
 		"""
+		start_time = time.time()
 		for i in range(self.config.max_iters):
 			if i == self.config.lock_iteration:
 				self._lock_mappings()
@@ -122,6 +126,8 @@ class RelaxationSolver:
 		self.guesses = np.argmax(self.p_map, axis=1)  # This is the final guesses
 		self.decode()
 
+		self.time = time.time() - start_time
+
 	def _lock_mappings(self) -> None:
 		"""Locks high-confidence mappings."""
 		confs = np.max(self.p_map, axis=1)
@@ -176,3 +182,43 @@ class RelaxationSolver:
 
 		self.decoded = "".join(decoded_chars)
 		return self.decoded
+
+	def __str__(self) -> str:
+		return (
+			f"RelaxationSolver {{\n"
+			f"  cipher: {self.cipher.name}\n"
+			f"  config: {self.config.__str__()}\n"
+			f"  guesses: {self.guesses}\n"
+			f"  decoded: {self.decoded}\n"
+			f"  time: {self.time:.4f}\n}}"
+		)
+
+	def __json__(self) -> dict[str, Any]:
+		return {
+			"eng_profile": self.eng_profile.__json__(),
+			"cip_profile": self.cip_profile.__json__(),
+			"cipher": self.cipher.__json__(),
+			"config": self.config.__json__(),
+			"guesses": self.guesses.tolist() if self.guesses is not None else None,
+			"decoded": self.decoded,
+			"time": self.time,
+		}
+  
+	@staticmethod
+	def __from_json__(json: dict[str, Any]) -> "RelaxationSolver":
+		from classes.solver_config import SolverConfig
+		from classes.cipher import Cipher
+		from classes.statistical_profile import StatisticalProfile
+		eng_profile = StatisticalProfile.__from_json__(json["eng_profile"])
+		cip_profile = StatisticalProfile.__from_json__(json["cip_profile"])
+		cipher = Cipher.__from_json__(json["cipher"])
+		config = SolverConfig.__from_json__(json["config"])
+		guesses = np.array(json["guesses"]) if json["guesses"] is not None else None
+		decoded = json["decoded"]
+
+		solver = RelaxationSolver(eng_profile, cip_profile, cipher, config)
+		solver.guesses = guesses
+		solver.decoded = decoded
+		solver.time = json["time"]
+
+		return solver

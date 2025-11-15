@@ -5,6 +5,7 @@ from collections import Counter
 import nltk
 import string
 from utils.logging import get_colored_logger
+from typing import Any
 
 log = get_colored_logger("Relaxation Solver")
 
@@ -177,5 +178,20 @@ class StatisticalProfile:
 		if save:
 			log.debug(f"Saving new English matrix to {matrix_file}...")
 			save_matrix(profile.p_raw, symbols, symbols, matrix_file)
+
+		return profile
+
+	def __json__(self) -> dict[str, Any]:
+		return {
+			"p_raw": self.p_raw.tolist(),
+			"symbols": self.symbols,
+		}
+
+	@staticmethod
+	def __from_json__(json: dict[str, Any]) -> "StatisticalProfile":
+		p_raw = np.array(json["p_raw"])
+		symbols = json["symbols"]
+
+		profile = StatisticalProfile(p_raw, symbols)
 
 		return profile
