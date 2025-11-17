@@ -127,7 +127,11 @@ class StatisticalProfile:
 			except Exception as e:
 				log.debug(f"Cache load failed ({e}). Rebuilding...")
 
-		symbols = [symbol for symbols in cipher.key.values() for symbol in symbols]
+		all_symbols = []
+		for symbol_list in cipher.key.values():
+			for symbol in symbol_list:
+				all_symbols.append(symbol)
+		symbols = all_symbols
 
 		profile = StatisticalProfile.from_text(cipher.ciphertext, symbols)
 
