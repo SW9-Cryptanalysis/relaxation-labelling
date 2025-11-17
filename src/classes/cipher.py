@@ -17,6 +17,13 @@ class Cipher:
 		self.num_symbols = cipher_json["num_symbols"]
 		self.difficulty = cipher_json["difficulty"]
 		self.recurrence_encoding = cipher_json["recurrence_encoding"]
+  
+	def get_symbols(self) -> list[str]:
+		all_symbols = []
+		for symbol_list in self.key.values():
+			for symbol in symbol_list:
+				all_symbols.append(symbol)
+		return all_symbols
 
 	def __str__(self) -> str:
 		key_str = "    " + "\n    ".join(
