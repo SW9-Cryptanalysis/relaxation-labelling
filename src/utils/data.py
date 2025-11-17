@@ -54,6 +54,7 @@ def write_results_to_file(
 
 def load_ciphers_list() -> list[str]:
 	list = os.listdir(CIPHER_PATH)
+	list = [cipher.replace(".json", "") for cipher in list]
 	sorted_list = sort_ciphers(list)
 	for cipher in list:
 		if cipher not in sorted_list:
@@ -65,7 +66,7 @@ def sort_ciphers(list: list[str]) -> list[str]:
 	cipher_info = []
 	for cipher in list:
 		if cipher[0] == "c" and not "mono" in cipher:
-			cipher_info.append(cipher.replace(".json", "").split("_"))
+			cipher_info.append(cipher.split("_"))
 
 	cipher_info.sort(key=lambda x: (int(x[1]), int(x[2])))
 	return ["_".join(x) for x in cipher_info]
