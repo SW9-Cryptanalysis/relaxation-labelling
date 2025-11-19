@@ -6,11 +6,13 @@ import time
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from classes import StatisticalProfile, Cipher
+    
+from .solver import Solver
 
 log = get_colored_logger("Relaxation Solver")
 
 
-class RelaxationSolver:
+class RelaxationSolver(Solver):
 	"""
 	Solves substitution ciphers using a relaxation labeling algorithm based on
 	bigram statistics.
