@@ -1,13 +1,15 @@
 from classes import RelaxationSolver, Cipher
+from classes.solver import Solver
 from utils.logging import get_colored_logger
 import numpy as np
 from typing import Any
 import json
+import os
 
 log = get_colored_logger("Relaxation Solver")
 
 class SolverAnalytics:
-	def __init__(self, solver: RelaxationSolver, cipher: Cipher):
+	def __init__(self, solver: Solver, cipher: Cipher):
 		self.solver = solver
 		self.cipher = cipher
 		self.eng_profile = solver.eng_profile
@@ -91,7 +93,7 @@ class SolverAnalytics:
 			return np.nan
 		if not self.cipher.plaintext or len(self.solver.decoded) != len(self.cipher.plaintext):
 			log.warning("Plaintext mismatch or missing. Cannot calculate SER.")
-			log.warning(f"Ciphertext length: {len(self.solver.decoded)}")
+			log.warning(f"Decoded length: {len(self.solver.decoded)}")
 			log.warning(f"Plaintext length: {len(self.cipher.plaintext)}")
 			return np.nan
 
@@ -112,9 +114,22 @@ class SolverAnalytics:
   
 	@staticmethod
 	def __from_json__(json: dict[str, Any]) -> "SolverAnalytics":
-		solver = RelaxationSolver.__from_json__(json["solver"])
+		solver = Solver.__from_json__(json["solver"])
 		cipher = Cipher.__from_json__(json["cipher"])
 
 		analytics = SolverAnalytics(solver, cipher)
 
 		return analytics
+
+	def save(self, path: str) -> None:
+		"""
+		Saves the solver to a file.
+		"""
+		if not path.endswith(".json"):
+			path += ".json"
+
+		path_dir = os.path.dirname(path)
+		if not os.path.exists(path_dir):
+			os.makedirs(path_dir)
+		with open(path, "w") as f:
+			json.dump(self.__json__(), f, indent=4)
