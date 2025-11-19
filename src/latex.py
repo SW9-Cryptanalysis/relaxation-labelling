@@ -4,7 +4,19 @@ from classes.solver_analytics import SolverAnalytics
 from utils.data import load_results
 
 
-def save_results_as_latex(results: list["SolverAnalytics"], name: str = "result_table") -> None:
+def save_results_as_latex(
+	results: list["SolverAnalytics"], name: str = "result_table",
+) -> None:
+	"""Save results as a LaTeX table.
+
+	Args:
+		results (list[SolverAnalytics]): The results to save
+		name (str, optional): The name of the LaTeX table. Defaults to "result_table".
+
+	Returns:
+		None
+
+	"""
 	table_str = "\\begin{table}[]\n"
 
 	prebody_str = indent(
@@ -23,7 +35,8 @@ def save_results_as_latex(results: list["SolverAnalytics"], name: str = "result_
 
 	for result in results:
 		tabular_str += indent(
-			f"\\texttt{{{result.cipher.name.replace('_', '\\_')}}} & {result.ser:.4f} & {result.mer:.4f} & {result.solver.time:.4f} \\\\ \n",
+			f"\\texttt{{{result.cipher.name.replace('_', '\\_')}}} & "
+			f"{result.ser:.4f} & {result.mer:.4f} & {result.solver.time:.4f} \\\\ \n",
 			2,
 		)
 
@@ -36,10 +49,19 @@ def save_results_as_latex(results: list["SolverAnalytics"], name: str = "result_
 		os.makedirs(RESULT_PATH)
 	with open(f"{RESULT_PATH}/{name}.txt", "w") as f:
 		f.write(table_str)
-		print("Saved latex")
 
 
 def indent(text: str, level: int = 1) -> str:
+	"""Indent a string by a given level.
+
+	Args:
+		text (str): The text to indent
+		level (int, optional): The level of indentation. Defaults to 1.
+
+	Returns:
+		str: The indented text
+
+	"""
 	lines = text.splitlines()
 	return "\n".join(["  " * level + line for line in lines[: len(lines)]]) + "\n"
 

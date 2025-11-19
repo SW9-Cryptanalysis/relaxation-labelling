@@ -13,7 +13,20 @@ from argparse import ArgumentParser
 log = get_colored_logger("Relaxation Solver")
 
 
-def solve_cipher(cipher_name: str, config: SolverConfig = SolverConfig()):
+def solve_cipher(
+	cipher_name: str, config: SolverConfig | None = None,
+) -> SolverAnalytics:
+	"""Solve a single cipher.
+
+	Args:
+		cipher_name (str): Name of the cipher to solve
+		config (SolverConfig, optional): Solver configuration. Defaults to None.
+
+	Returns:
+		SolverAnalytics: Solver analytics object
+
+	"""
+	config = SolverConfig() if config is None else config
 	cipher = Cipher(cipher_name)
 	cipher.load_data()
 

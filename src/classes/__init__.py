@@ -1,3 +1,5 @@
+"""Classes for the relaxation-labelling project."""
+
 from .cipher import Cipher
 from .statistical_profile import StatisticalProfile
 from .relaxation_solver import RelaxationSolver

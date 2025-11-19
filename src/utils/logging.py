@@ -6,12 +6,13 @@ import os
 dotenv.load_dotenv()
 
 LOG_LEVEL_TO_INT = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL,
+	"DEBUG": logging.DEBUG,
+	"INFO": logging.INFO,
+	"WARNING": logging.WARNING,
+	"ERROR": logging.ERROR,
+	"CRITICAL": logging.CRITICAL,
 }
+
 
 class AnsiColorFormatter(logging.Formatter):
 	"""Formatter that adds ANSI color codes to log messages based on severity level."""
@@ -66,7 +67,6 @@ class AnsiColorFormatter(logging.Formatter):
 		asctime = self.formatTime(record, self.datefmt)
 		levelname = record.levelname
 		levelno = record.levelno
-		name = record.name
 		message = record.getMessage()
 
 		time_str = f"{self.color_codes['time']}{asctime}{self.color_codes['reset']}"
@@ -74,7 +74,6 @@ class AnsiColorFormatter(logging.Formatter):
 			f"{self.color_codes['level'].get(levelno, self.color_codes['reset'])}"
 			f"{levelname}{self.color_codes['reset']}"
 		)
-		name_str = f"{self.color_codes['name']}{name}{self.color_codes['reset']}"
 		message_str = (
 			f"{self.color_codes['message']}{message}{self.color_codes['reset']}"
 		)
@@ -85,8 +84,11 @@ class AnsiColorFormatter(logging.Formatter):
 
 		return f"{time_str} | {level_str} | {message_str} {filename_str}"
 
-        
-def get_colored_logger(name: str, level: int = (LOG_LEVEL_TO_INT[os.getenv('LOG_LEVEL', '')] or logging.DEBUG))-> logging.Logger:
+
+def get_colored_logger(
+	name: str,
+	level: int = (LOG_LEVEL_TO_INT[os.getenv("LOG_LEVEL", "")] or logging.DEBUG),
+) -> logging.Logger:
 	"""Create and configures a logger with the AnsiColorFormatter.
 
 	Args:

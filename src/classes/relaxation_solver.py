@@ -6,16 +6,37 @@ import time
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from classes import StatisticalProfile, Cipher
-    
+
 from .solver import Solver
 
 log = get_colored_logger("Relaxation Solver")
 
 
 class RelaxationSolver(Solver):
-	"""
-	Solves substitution ciphers using a relaxation labeling algorithm based on
-	bigram statistics.
+	"""Solves substitution ciphers using a relaxation labeling algorithm.
+
+	Attributes:
+		eng_profile (StatisticalProfile): The English statistical profile
+		cip_profile (StatisticalProfile): The cipher statistical profile
+		cipher (Cipher): The cipher object
+		config (SolverConfig): The solver configuration
+		guesses (np.ndarray, optional): The guesses array. Defaults to None.
+		decoded (str, optional): The decoded string. Defaults to None.
+		time (float, optional): The time taken to run the solver. Defaults to 0.0.
+		p_map (np.ndarray): The probability map
+		locked_mappings (np.ndarray): Stores indices of mappings that are "locked"
+		_valid_key (dict[int, int], optional): The {cip_idx: eng_idx} validation
+			key. Defaults to None.
+
+	Methods:
+		run(valid_key: dict[int, int] | None = None) -> None: Run the relaxation
+			algorithm for a given number of iterations.
+		decode() -> str: Decode the ciphertext using the final guessed key.
+		__str__() -> str: Convert the RelaxationSolver to a string.
+		__json__() -> dict[str, Any]: Convert the RelaxationSolver to a JSON object.
+		__from_json__(json: dict[str, Any]) -> RelaxationSolver: Load a
+			RelaxationSolver from a JSON object.
+
 	"""
 
 	def __init__(
@@ -23,36 +44,47 @@ class RelaxationSolver(Solver):
 		eng_profile: "StatisticalProfile",
 		cip_profile: "StatisticalProfile",
 		cipher: "Cipher",
-		config: SolverConfig = SolverConfig(),
-	):
+		config: SolverConfig | None = None,
+	) -> None:
+		"""Initialize a RelaxationSolver.
+
+		Args:
+			eng_profile (StatisticalProfile): The English statistical profile
+			cip_profile (StatisticalProfile): The cipher statistical profile
+			cipher (Cipher): The cipher object
+			config (SolverConfig, optional): The solver configuration. Defaults to None.
+
+		Returns:
+			None
+
+		"""
 		self.eng_profile = eng_profile
 		self.cip_profile = cip_profile
 		self.cipher = cipher
-		self.config = config
+		self.config = config if config else SolverConfig()
 
 		self.time = 0.0
 
 		self.cip_size = cip_profile.size
 		self.eng_size = eng_profile.size
 
-		# Pre-calculate the transposed English bigram matrix for efficiency
 		self._eng_p_raw_T = self.eng_profile.p_raw.T
-
-		# Initialize the probability map
 		self._initialize_map()
 
-		# Stores indices of mappings that are "locked"
 		self.locked_mappings = np.full(self.cip_size, -1, dtype=int)
 
-		# Pre-calculate the true key mapping (if available) for accuracy checks
 		self._valid_key: dict[int, int] | None = None
 
-		# --- Solver Results (initialized to None) ---
-		self.p_map: np.ndarray  # The probability map
+		self.p_map: np.ndarray
 		self.guesses: np.ndarray | None = None
 
 	def _initialize_map(self) -> None:
-		"""Initializes the probability map p_map."""
+		"""Initialize the probability map p_map.
+
+		Returns:
+			None
+
+		"""
 		self.p_map = np.zeros((self.cip_size, self.eng_size))
 		for i in range(self.cip_size):
 			for j in range(self.eng_size):
@@ -61,26 +93,30 @@ class RelaxationSolver(Solver):
 					* self.eng_profile.unigram_frequencies[j]
 				)
 
-		# Normalize rows to sum to 1
 		self.p_map = self.p_map / (
 			self.p_map.sum(axis=1, keepdims=True) + self.config.epsilon
 		)
 
 	def run(self, valid_key: dict[int, int] | None = None) -> None:
-		"""
-		Runs the relaxation algorithm for a given number of iterations.
+		"""Run the relaxation algorithm for a given number of iterations.
+
+		Args:
+			valid_key (dict[int, int], optional): The {cip_idx: eng_idx} validation
+				key. Defaults to None.
+
+		Returns:
+			None
+
 		"""
 		start_time = time.time()
 		for i in range(self.config.max_iters):
 			if i == self.config.lock_iteration:
 				self._lock_mappings()
 
-			# --- Calculate Support (Compatibility) ---
-			# Support from successor symbols (c_i -> e_j implies c_k -> e_l)
 			support_successor = (
 				self.cip_profile.p_row_normalized @ self.p_map @ self._eng_p_raw_T
 			)
-			# Support from predecessor symbols
+
 			support_predecessor = (
 				self.cip_profile.p_col_normalized.T
 				@ self.p_map
@@ -88,7 +124,6 @@ class RelaxationSolver(Solver):
 			)
 			total_support = support_successor + support_predecessor
 
-			# --- Update Step ---
 			lr = (
 				self.config.lr_phase1
 				if i < self.config.lock_iteration
@@ -96,7 +131,6 @@ class RelaxationSolver(Solver):
 			)
 			p_map_new = self.p_map * (1 + lr * total_support)
 
-			# --- Balance Step (to match unigram frequencies) ---
 			balance_power = (
 				self.config.balance_phase1
 				if i < self.config.lock_iteration
@@ -108,7 +142,6 @@ class RelaxationSolver(Solver):
 			) ** balance_power
 			p_map_new = p_map_new * balance_factor
 
-			# --- Normalize Step ---
 			p_map_new = p_map_new / (
 				p_map_new.sum(axis=1, keepdims=True) + self.config.epsilon
 			)
@@ -118,20 +151,23 @@ class RelaxationSolver(Solver):
 
 			self.p_map = p_map_new
 
-			# --- Log Accuracy (if true key is known) ---
 			if i % 50 == 0 and valid_key:
 				temp_guesses = np.argmax(self.p_map, axis=1)
 				correct = sum(1 for c, e in valid_key.items() if temp_guesses[c] == e)
 				log.debug(f"Iter {i:3d}: Acc {100 * correct / len(valid_key):.1f}%")
 
-		# --- Finalize results ---
-		self.guesses = np.argmax(self.p_map, axis=1)  # This is the final guesses
+		self.guesses = np.argmax(self.p_map, axis=1)
 		self.decode()
 
 		self.time = time.time() - start_time
 
 	def _lock_mappings(self) -> None:
-		"""Locks high-confidence mappings."""
+		"""Lock high-confidence mappings.
+
+		Returns:
+			None
+
+		"""
 		confs = np.max(self.p_map, axis=1)
 		winners = np.argmax(self.p_map, axis=1)
 
@@ -144,9 +180,16 @@ class RelaxationSolver(Solver):
 			self.p_map[i, winners[i]] = 1.0
 
 	def _restore_locked_mappings(self, p_map_new: np.ndarray) -> None:
-		"""
-		Enforces locked mappings on the new probability map.
+		"""Enforce locked mappings on the new probability map.
+
 		Note: This modifies p_map_new in place.
+
+		Args:
+			p_map_new (np.ndarray): The new probability map
+
+		Returns:
+			None
+
 		"""
 		for i in range(self.cip_size):
 			locked_val = self.locked_mappings[i]
@@ -157,12 +200,15 @@ class RelaxationSolver(Solver):
 			p_map_new[i, locked_val] = 1.0
 
 	def decode(self) -> str:
-		"""
-		Decodes the ciphertext using the final guessed key.
+		"""Decode the ciphertext using the final guessed key.
+
+		Returns:
+			str: The decoded string
+
 		"""
 		if self.guesses is None:
 			logging.error(
-				"Cannot decode. Guesses have not been generated. Run .run() first."
+				"Cannot decode. Guesses have not been generated. Run .run() first.",
 			)
 			return ""
 
@@ -186,6 +232,12 @@ class RelaxationSolver(Solver):
 		return self.decoded
 
 	def __str__(self) -> str:
+		"""Convert the RelaxationSolver to a string.
+
+		Returns:
+			str: The string representation of the RelaxationSolver
+
+		"""
 		return (
 			f"RelaxationSolver {{\n"
 			f"  cipher: {self.cipher.name}\n"
@@ -196,6 +248,12 @@ class RelaxationSolver(Solver):
 		)
 
 	def __json__(self) -> dict[str, Any]:
+		"""Convert the RelaxationSolver to a JSON object.
+
+		Returns:
+			dict[str, Any]: The JSON object
+
+		"""
 		return {
 			"eng_profile": self.eng_profile.__json__(),
 			"cip_profile": self.cip_profile.__json__(),
@@ -205,9 +263,18 @@ class RelaxationSolver(Solver):
 			"decoded": self.decoded,
 			"time": self.time,
 		}
-  
+
 	@staticmethod
 	def __from_json__(json: dict[str, Any]) -> "RelaxationSolver":
+		"""Load a RelaxationSolver from a JSON object.
+
+		Args:
+			json (dict[str, Any]): The JSON object to load the RelaxationSolver from
+
+		Returns:
+			RelaxationSolver: The RelaxationSolver object
+
+		"""
 		from classes.solver_config import SolverConfig
 		from classes.cipher import Cipher
 		from classes.statistical_profile import StatisticalProfile

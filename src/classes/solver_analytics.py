@@ -1,4 +1,4 @@
-from classes import RelaxationSolver, Cipher
+from classes import Cipher
 from classes.solver import Solver
 from utils.logging import get_colored_logger
 import numpy as np
@@ -8,23 +8,59 @@ import os
 
 log = get_colored_logger("Relaxation Solver")
 
+
 class SolverAnalytics:
-	def __init__(self, solver: Solver, cipher: Cipher):
+	"""Analyzes a solver and cipher object and stores the results.
+
+	Attributes:
+		solver (Solver): The solver object to analyze
+		cipher (Cipher): The cipher object to analyze
+		eng_profile (StatisticalProfile): The English statistical profile
+		cip_profile (StatisticalProfile): The cipher statistical profile
+		valid_key (dict[int, int], optional): The {cip_idx: eng_idx} validation
+			key. Defaults to None.
+		_mer (float, optional): The Mapping Error Rate (MER). Defaults to None.
+		_ser (float, optional): The Symbol Error Rate (SER). Defaults to None.
+
+	Methods:
+		save(path: str) -> None: Save the solver analytics to a file.
+		__str__() -> str: Convert the SolverAnalytics to a string.
+		__json__() -> dict[str, Any]: Convert the SolverAnalytics to a JSON object.
+		__from_json__(json: dict[str, Any]) -> SolverAnalytics: Load a
+			SolverAnalytics from a JSON object.
+
+	"""
+
+	def __init__(self, solver: Solver, cipher: Cipher) -> None:
+		"""Initialize a SolverAnalytics object.
+
+		Args:
+			solver (Solver): The solver object to analyze
+			cipher (Cipher): The cipher object to analyze
+
+		Returns:
+			None
+
+		"""
 		self.solver = solver
 		self.cipher = cipher
 		self.eng_profile = solver.eng_profile
 		self.cip_profile = solver.cip_profile
-		
+
 		self._valid_key: dict[int, int] | None = None
 		self._mer: float | None = None
 		self._ser: float | None = None
-		
-  
+
 	@property
 	def valid_key(self) -> dict[int, int]:
-		"""
-		Lazily builds the {cip_idx: eng_idx} validation key 
-		from the cipher's {letter: [symbols]} (homophonic) key.
+		"""Return the {cip_idx: eng_idx} validation key.
+
+		Lazily builds the {cip_idx: eng_idx} validation key	from the cipher's
+		{letter: [symbols]} (homophonic) key.
+
+		Returns:
+			dict[int, int]: The {cip_idx: eng_idx} validation key
+
 		"""
 		if self._valid_key is None:
 			self._valid_key = {}
@@ -36,33 +72,42 @@ class SolverAnalytics:
 				letter_str = str(letter).strip().lower()
 				if letter_str not in eng_map:
 					continue
-				
+
 				eng_idx = eng_map[letter_str]
 
 				self._traverse_symbol_list(cip_map, symbol_list, eng_idx)
-			
+
 			if not self._valid_key:
-				log.warning("Warning: Could not build valid_key from cipher.key. Check for symbol mismatches.")
+				log.warning(
+					"Warning: Could not build valid_key from cipher.key. "
+					"Check for symbol mismatches.",
+				)
 
 		return self._valid_key
 
-	def _traverse_symbol_list(self, cip_map, symbol_list, eng_idx):
+	def _traverse_symbol_list(
+		self, cip_map: dict[str, int], symbol_list: list[str], eng_idx: int,
+	) -> None:
 		if not self._valid_key:
 			self._valid_key = {}
 		for symbol in symbol_list:
-			symbol_str = str(symbol).strip() # Ensure symbol is a valid cipher profile symbol
+			symbol_str = str(
+				symbol,
+			).strip()
 			if symbol_str in cip_map:
 				cip_idx = cip_map[symbol_str]
 				self._valid_key[cip_idx] = eng_idx
-	
-	
+
 	@property
 	def mer(self) -> float:
-		"""
-		Mapping Error Rate (MER): Percentage of incorrect key mappings.
-		Returns np.nan if not calculated.
-		"""
+		"""Return the Mapping Error Rate (MER).
 
+		Mapping Error Rate (MER): Ratio of incorrect key mappings.
+
+		Returns:
+			float: The Mapping Error Rate (MER)
+
+		"""
 		if self._mer is not None:
 			return self._mer
 
@@ -84,36 +129,71 @@ class SolverAnalytics:
 
 	@property
 	def ser(self) -> float:
-		"""
-		Symbol Error Rate (SER): Percentage of incorrect characters in the decoded text.
+		"""Return the Symbol Error Rate (SER).
+
+		Symbol Error Rate (SER): Ratio of incorrect characters in the decoded text.
 		Returns np.nan if not calculated.
+
+		Returns:
+			float: The Symbol Error Rate (SER)
+
 		"""
 		if not self.solver.decoded:
 			log.warning("SER not yet calculated. Run .decode() first.")
 			return np.nan
-		if not self.cipher.plaintext or len(self.solver.decoded) != len(self.cipher.plaintext):
+		if not self.cipher.plaintext or len(self.solver.decoded) != len(
+			self.cipher.plaintext,
+		):
 			log.warning("Plaintext mismatch or missing. Cannot calculate SER.")
 			log.warning(f"Decoded length: {len(self.solver.decoded)}")
 			log.warning(f"Plaintext length: {len(self.cipher.plaintext)}")
 			return np.nan
 
-		correct = sum(1 for d, a in zip(self.solver.decoded, self.cipher.plaintext) if d == a)
+		correct = sum(
+			1
+			for d, a in zip(self.solver.decoded, self.cipher.plaintext, strict=True)
+			if d == a
+		)
 		self._ser = 1.0 - (correct / len(self.solver.decoded))
 		return self._ser
 
 	def __str__(self) -> str:
+		"""Convert the SolverAnalytics to a string.
+
+		Returns:
+			str: The string representation of the SolverAnalytics
+
+		"""
 		return (
-			f"SolverAnalytics {{\n  solver: {self.solver.__str__()}\n  cipher: {self.cipher.__str__()}\n}}"
+			f"SolverAnalytics {{"
+			f"\n  solver: {self.solver.__str__()}\n"
+			f"  cipher: {self.cipher.__str__()}\n"
+			f"}}"
 		)
 
 	def __json__(self) -> dict[str, Any]:
+		"""Convert the SolverAnalytics to a JSON object.
+
+		Returns:
+			dict[str, Any]: The JSON object
+
+		"""
 		return {
 			"solver": self.solver.__json__(),
 			"cipher": self.cipher.__json__(),
 		}
-  
+
 	@staticmethod
 	def __from_json__(json: dict[str, Any]) -> "SolverAnalytics":
+		"""Load a SolverAnalytics from a JSON object.
+
+		Args:
+			json (dict[str, Any]): The JSON object to load the SolverAnalytics from
+
+		Returns:
+			SolverAnalytics: The SolverAnalytics object
+
+		"""
 		solver = Solver.__from_json__(json["solver"])
 		cipher = Cipher.__from_json__(json["cipher"])
 
@@ -122,13 +202,19 @@ class SolverAnalytics:
 		return analytics
 
 	def save(self, path: str) -> None:
-		"""
-		Saves the solver to a file.
+		"""Save the solver analytics to a file.
+
+		Args:
+			path (str): The path to save the solver analytics to
+
+		Returns:
+			None
+
 		"""
 		if not path.endswith(".json"):
 			path += ".json"
 
-		path_dir = os.path.dirname(path)
+		path_dir = os.path.dirname(os.path.abspath(path))
 		if not os.path.exists(path_dir):
 			os.makedirs(path_dir)
 		with open(path, "w") as f:

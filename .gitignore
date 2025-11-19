@@ -209,5 +209,4 @@ __marimo__/
 src/data/
 src/log/
 src/result/
-src/latex.py
 src/ngram/
