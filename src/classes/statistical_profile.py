@@ -132,7 +132,7 @@ class StatisticalProfile:
 				occurences
 
 		"""
-		return Counter(zip(text, text[1:], strict=True))
+		return Counter(zip(text, text[1:], strict=False))
 
 	@staticmethod
 	def _construct_matrix(
