@@ -53,7 +53,7 @@ def save_results_as_latex(
 		if not os.path.exists(RESULT_PATH):
 			os.makedirs(RESULT_PATH, exist_ok=True)
 			
-		full_path = os.path.join(RESULT_PATH, f"{name}.txt")
+		full_path = os.path.join(os.getcwd(), f"DEBUG_LATEX_OUTPUT_{name}.txt")
 		log.debug(f"Saving table to {full_path}")
 		
 		with open(full_path, "w") as f:
