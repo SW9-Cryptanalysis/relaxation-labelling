@@ -110,7 +110,7 @@ class NGramScorer:
 			NGramScorer: The NGramScorer object
 
 		"""
-		scorer = NGramScorer(json["n"], json["n_grams"])
+		scorer = NGramScorer(json["n"],  "english_quadgrams.txt")
 		scorer.total_count = json["total_count"]
 		scorer._floor_score = json["floor_score"]
 		return scorer
