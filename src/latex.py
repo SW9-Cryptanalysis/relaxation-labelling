@@ -38,7 +38,7 @@ def save_results_as_latex(
 
 	for result in results:
 		tabular_str += indent(
-			f"\\texttt{{{result.cipher.name.replace('_', '\\_')}}} & "
+			f"\\texttt{{{result.solver.cipher.name.replace('_', '\\_')}}} & "
 			f"{result.ser:.4f} & {result.mer:.4f} & {result.solver.time:.4f} \\\\ \n",
 			2,
 		)

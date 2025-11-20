@@ -72,7 +72,7 @@ def run_analysis(
 
 	log.info(f"--- Run finished in {solver.time:.2f} seconds ---")
 
-	analytics = SolverAnalytics(cipher=cipher, solver=solver)
+	analytics = SolverAnalytics(solver=solver)
 	return analytics
 
 
@@ -122,13 +122,13 @@ def main() -> None:
 		results.append(best_analytics)
 
 	if results:
-		results.sort(key=lambda r: r.cipher.name)
+		results.sort(key=lambda r: r.solver.cipher.name)
 		for r in results:
 			log.info(
-				f"Result for {r.cipher.name}: {r.solver.decoded}"
+				f"Result for {r.solver.cipher.name}: {r.solver.decoded}"
 				f"(SER: {r.ser:.4f}, MER: {r.mer:.4f})",
 			)
-			r.save(RESULT_PATH_MCMC + f"{r.cipher.name}.json")
+			r.save(RESULT_PATH_MCMC + f"{r.solver.cipher.name}.json")
 	else:
 		log.error("No results to save.")
 

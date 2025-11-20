@@ -179,6 +179,6 @@ def load_results() -> list["SolverAnalytics"]:
 	from classes.solver_analytics import SolverAnalytics
 
 	for result in result_json:
-		results.append(SolverAnalytics.__from_json__(result))
+		results.append(SolverAnalytics.__from_json__(result, "RelaxationSolver"))
 
 	return results

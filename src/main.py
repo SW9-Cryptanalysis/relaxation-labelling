@@ -34,7 +34,7 @@ def solve_cipher(
 	english_profile = StatisticalProfile.from_english_corpus(save=True)
 
 	solver = RelaxationSolver(english_profile, cipher_profile, cipher, config)
-	analytics = SolverAnalytics(solver, cipher)
+	analytics = SolverAnalytics(solver)
 
 	solver.run()
 	solver.decode()

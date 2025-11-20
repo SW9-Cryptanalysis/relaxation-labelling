@@ -1,4 +1,5 @@
-from classes import Cipher
+from classes.mcmc_solver import McmcSolver
+from classes.relaxation_solver import RelaxationSolver
 from classes.solver import Solver
 from utils.logging import get_colored_logger
 import numpy as np
@@ -31,19 +32,17 @@ class SolverAnalytics:
 
 	"""
 
-	def __init__(self, solver: Solver, cipher: Cipher) -> None:
+	def __init__(self, solver: Solver) -> None:
 		"""Initialize a SolverAnalytics object.
 
 		Args:
 			solver (Solver): The solver object to analyze
-			cipher (Cipher): The cipher object to analyze
 
 		Returns:
 			None
 
 		"""
 		self.solver = solver
-		self.cipher = cipher
 		self.eng_profile = solver.eng_profile
 		self.cip_profile = solver.cip_profile
 
@@ -67,7 +66,7 @@ class SolverAnalytics:
 			cip_map = self.cip_profile.symbol_to_idx
 			eng_map = self.eng_profile.symbol_to_idx
 
-			for letter, symbol_list in self.cipher.key.items():
+			for letter, symbol_list in self.solver.cipher.key.items():
 				# Ensure letter is a valid English profile symbol
 				letter_str = str(letter).strip().lower()
 				if letter_str not in eng_map:
@@ -141,17 +140,17 @@ class SolverAnalytics:
 		if not self.solver.decoded:
 			log.warning("SER not yet calculated. Run .decode() first.")
 			return np.nan
-		if not self.cipher.plaintext or len(self.solver.decoded) != len(
-			self.cipher.plaintext,
+		if not self.solver.cipher.plaintext or len(self.solver.decoded) != len(
+			self.solver.cipher.plaintext,
 		):
 			log.warning("Plaintext mismatch or missing. Cannot calculate SER.")
 			log.warning(f"Decoded length: {len(self.solver.decoded)}")
-			log.warning(f"Plaintext length: {len(self.cipher.plaintext)}")
+			log.warning(f"Plaintext length: {len(self.solver.cipher.plaintext)}")
 			return np.nan
 
 		correct = sum(
 			1
-			for d, a in zip(self.solver.decoded, self.cipher.plaintext, strict=True)
+			for d, a in zip(self.solver.decoded, self.solver.cipher.plaintext, strict=True)
 			if d == a
 		)
 		self._ser = 1.0 - (correct / len(self.solver.decoded))
@@ -167,7 +166,6 @@ class SolverAnalytics:
 		return (
 			f"SolverAnalytics {{"
 			f"\n  solver: {self.solver.__str__()}\n"
-			f"  cipher: {self.cipher.__str__()}\n"
 			f"}}"
 		)
 
@@ -180,11 +178,10 @@ class SolverAnalytics:
 		"""
 		return {
 			"solver": self.solver.__json__(),
-			"cipher": self.cipher.__json__(),
 		}
 
 	@staticmethod
-	def __from_json__(json: dict[str, Any]) -> "SolverAnalytics":
+	def __from_json__(json: dict[str, Any], solver_type: str) -> "SolverAnalytics":
 		"""Load a SolverAnalytics from a JSON object.
 
 		Args:
@@ -194,10 +191,13 @@ class SolverAnalytics:
 			SolverAnalytics: The SolverAnalytics object
 
 		"""
-		solver = Solver.__from_json__(json["solver"])
-		cipher = Cipher.__from_json__(json["cipher"])
-
-		analytics = SolverAnalytics(solver, cipher)
+		if "mcmcsolver" in solver_type.lower():
+			solver = McmcSolver.__from_json__(json["solver"])
+		elif "relaxationsolver" in solver_type.lower():
+			solver = RelaxationSolver.__from_json__(json["solver"])
+		else:
+			raise ValueError("Unknown solver type: " + solver_type)
+		analytics = SolverAnalytics(solver)
 
 		return analytics
 
