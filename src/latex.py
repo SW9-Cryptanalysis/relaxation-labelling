@@ -49,11 +49,21 @@ def save_results_as_latex(
 
 	log.debug("Saving Latex table...")
 	# Save as easy copy-pastable LaTeX table
-	if not os.path.exists(RESULT_PATH):
-		os.makedirs(RESULT_PATH)
-	log.debug(f"Saving table to {RESULT_PATH}/{name}.txt")
-	with open(f"{RESULT_PATH}/{name}.txt", "w") as f:
-		f.write(table_str)
+	try:
+		if not os.path.exists(RESULT_PATH):
+			os.makedirs(RESULT_PATH, exist_ok=True)
+			
+		full_path = os.path.join(RESULT_PATH, f"{name}.txt")
+		log.debug(f"Saving table to {full_path}")
+		
+		with open(full_path, "w") as f:
+			f.write(table_str)
+			
+	except Exception as e:
+		# Catch any file system or permission error and log it clearly
+		log.error(f"FATAL ERROR: Could not save LaTeX table to disk. Permission denied or path error. Error: {e}")
+		# Log the table content so the user can copy-paste it manually if disk access fails
+		print("\n[Copy-Paste Fallback LaTeX Content Below]:\n" + table_str + "\n")
 
 
 def indent(text: str, level: int = 1) -> str:
