@@ -47,6 +47,7 @@ def save_results_as_latex(
 	table_str += tabular_str
 	table_str += postbody_str
 
+	log.debug("Saving Latex table...")
 	# Save as easy copy-pastable LaTeX table
 	if not os.path.exists(RESULT_PATH):
 		os.makedirs(RESULT_PATH)
