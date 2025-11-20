@@ -1,6 +1,7 @@
 import math
 from utils.constants import NGRAM_PATH
 from typing import Any
+import os
 
 
 class NGramScorer:
@@ -36,7 +37,7 @@ class NGramScorer:
 		self.total_count = 0
 		self._floor_score = None
 		self.n = n
-		self._load_n_grams(NGRAM_PATH + file_name)
+		self._load_n_grams(os.path.join(NGRAM_PATH, file_name))
 
 	@property
 	def floor_score(self) -> float:
