@@ -2,6 +2,9 @@ import os
 from utils.constants import RESULT_PATH
 from classes.solver_analytics import SolverAnalytics
 from utils.data import load_results
+from utils.logging import get_colored_logger
+
+log = get_colored_logger(__name__)
 
 
 def save_results_as_latex(
@@ -47,6 +50,7 @@ def save_results_as_latex(
 	# Save as easy copy-pastable LaTeX table
 	if not os.path.exists(RESULT_PATH):
 		os.makedirs(RESULT_PATH)
+	log.debug(f"Saving table to {RESULT_PATH}/{name}.txt")
 	with open(f"{RESULT_PATH}/{name}.txt", "w") as f:
 		f.write(table_str)
 
