@@ -154,7 +154,7 @@ class RelaxationSolver(Solver):
 
 			self.p_map = p_map_new
 
-			if i % 50 == 0 and valid_key:
+			if i % 50 == 0 and valid_key: # pragma: no cover
 				temp_guesses = np.argmax(self.p_map, axis=1)
 				correct = sum(1 for c, e in valid_key.items() if temp_guesses[c] == e)
 				log.debug(f"Iter {i:3d}: Acc {100 * correct / len(valid_key):.1f}%")
