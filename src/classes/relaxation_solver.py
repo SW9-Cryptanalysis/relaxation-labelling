@@ -92,8 +92,8 @@ class RelaxationSolver(Solver):
 					self.cip_profile.unigram_frequencies[i]
 					* self.eng_profile.unigram_frequencies[j]
 				)
-	
-		noise = np.random.uniform(0, 0.05, self.p_map.shape) 
+
+		noise = np.random.uniform(0, 0.05, self.p_map.shape)
 		self.p_map += noise
 
 		self.p_map = self.p_map / (

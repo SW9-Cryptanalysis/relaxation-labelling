@@ -5,7 +5,7 @@ from classes import (
     SolverAnalytics,
     SolverConfig,
 )
-from utils.data import load_ciphers_list, save_results
+from utils.data import load_ciphers_list
 from utils.logging import get_colored_logger
 from tqdm import tqdm
 from argparse import ArgumentParser
@@ -28,6 +28,8 @@ def solve_cipher(
     Args:
         cipher_name (str): Name of the cipher to solve
         config (SolverConfig, optional): Solver configuration. Defaults to None.
+        restarts (int, optional): Number of restarts to run. Defaults to 1.
+        p_bar (tqdm, optional): Global progress bar. Defaults to None.
 
     Returns:
         SolverAnalytics: Solver analytics object
@@ -108,7 +110,7 @@ if __name__ == "__main__":
             else:
                 length = 0
                 difficulty = 0
-        except:
+        except Exception:
             length = 0
             difficulty = 0
 
@@ -139,8 +141,8 @@ if __name__ == "__main__":
     # Group by cipher and find the BEST SER for each
     best_results_ser = df.loc[df.groupby("cipher_name")["ser"].idxmin()]
     best_results_score = df.loc[df.groupby("cipher_name")["score"].idxmax()]
-    print("\nBest results per cipher:")
-    print(best_results_ser[["cipher_name", "ser", "time"]].to_string())
-    
-    print("\nBest results per cipher (score):")
-    print(best_results_score[["cipher_name", "score", "time"]].to_string())
+    log.info("\nBest results per cipher:")
+    log.info(best_results_ser[["cipher_name", "ser", "time"]].to_string())
+
+    log.info("\nBest results per cipher (score):")
+    log.info(best_results_score[["cipher_name", "score", "time"]].to_string())

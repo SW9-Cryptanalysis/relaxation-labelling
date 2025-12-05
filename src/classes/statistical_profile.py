@@ -14,30 +14,30 @@ class StatisticalProfile:
 	"""Represents a statistical profile of symbols.
 
 	Attributes:
-	    p_raw (np.ndarray): The raw probabilities of the StatisticalProfile
-	    symbols (list[str]): The symbols of the StatisticalProfile
-	    symbol_to_idx (dict[str, int]): A mapping of symbols to their indices
-	    size (int): The size of the StatisticalProfile
-	    p_row_normalized (np.ndarray, optional): The row-normalized probabilities
-	        of the StatisticalProfile.
-	    p_col_normalized (np.ndarray, optional): The column-normalized probabilities
-	        of the StatisticalProfile.
-	    unigram_frequencies (np.ndarray, optional): The unigram frequencies of the
-	        StatisticalProfile.
+		p_raw (np.ndarray): The raw probabilities of the StatisticalProfile
+		symbols (list[str]): The symbols of the StatisticalProfile
+		symbol_to_idx (dict[str, int]): A mapping of symbols to their indices
+		size (int): The size of the StatisticalProfile
+		p_row_normalized (np.ndarray, optional): The row-normalized probabilities
+			of the StatisticalProfile.
+		p_col_normalized (np.ndarray, optional): The column-normalized probabilities
+			of the StatisticalProfile.
+		unigram_frequencies (np.ndarray, optional): The unigram frequencies of the
+			StatisticalProfile.
 
 	Methods:
-	    from_matrix_file(matrix_file: str) -> StatisticalProfile: Load a
-	        StatisticalProfile from a matrix file.
-	    from_text(text_sequence: list[str], symbols: list[str]) -> StatisticalProfile:
-	        Construct a StatisticalProfile from a text sequence.
-	    from_cipher(cipher: Cipher, *, save: bool = False, no_cache: bool = False)
-	        -> StatisticalProfile: Construct a StatisticalProfile from a Cipher object.
-	    from_english_corpus(*, save: bool = True, no_cache: bool = False)
-	        -> StatisticalProfile: Construct the English StatisticalProfile from the
-	        NLTK brown corpus.
-	    __json__() -> dict[str, Any]: Convert the StatisticalProfile to a JSON object.
-	    __from_json__(json: dict[str, Any]) -> StatisticalProfile: Load a
-	        StatisticalProfile from a JSON object.
+		from_matrix_file(matrix_file: str) -> StatisticalProfile: Load a
+			StatisticalProfile from a matrix file.
+		from_text(text_sequence: list[str], symbols: list[str]) -> StatisticalProfile:
+			Construct a StatisticalProfile from a text sequence.
+		from_cipher(cipher: Cipher, *, save: bool = False, no_cache: bool = False)
+			-> StatisticalProfile: Construct a StatisticalProfile from a Cipher object.
+		from_english_corpus(*, save: bool = True, no_cache: bool = False)
+			-> StatisticalProfile: Construct the English StatisticalProfile from the
+			NLTK brown corpus.
+		__json__() -> dict[str, Any]: Convert the StatisticalProfile to a JSON object.
+		__from_json__(json: dict[str, Any]) -> StatisticalProfile: Load a
+			StatisticalProfile from a JSON object.
 
 	"""
 
@@ -47,11 +47,11 @@ class StatisticalProfile:
 		"""Initialize a StatisticalProfile.
 
 		Args:
-		    p_raw (np.ndarray): The raw probabilities of the StatisticalProfile
-		    symbols (list[str]): The symbols of the StatisticalProfile
+			p_raw (np.ndarray): The raw probabilities of the StatisticalProfile
+			symbols (list[str]): The symbols of the StatisticalProfile
 
 		Returns:
-		    None
+			None
 
 		"""
 		self.p_raw = p_raw
@@ -68,7 +68,7 @@ class StatisticalProfile:
 		"""Get the row-normalized probabilities of the StatisticalProfile.
 
 		Returns:
-		    np.ndarray: The row-normalized probabilities of the StatisticalProfile
+			np.ndarray: The row-normalized probabilities of the StatisticalProfile
 
 		"""
 		if self._p_row_normalized is None:
@@ -80,7 +80,7 @@ class StatisticalProfile:
 		"""Get the column-normalized probabilities of the StatisticalProfile.
 
 		Returns:
-		    np.ndarray: The column-normalized probabilities of the StatisticalProfile
+			np.ndarray: The column-normalized probabilities of the StatisticalProfile
 
 		"""
 		if self._p_col_normalized is None:
@@ -92,7 +92,7 @@ class StatisticalProfile:
 		"""Get the unigram frequencies of the StatisticalProfile.
 
 		Returns:
-		    np.ndarray: The unigram frequencies of the StatisticalProfile
+			np.ndarray: The unigram frequencies of the StatisticalProfile
 
 		"""
 		if self._unigram_frequencies is None:
@@ -115,10 +115,10 @@ class StatisticalProfile:
 		"""Load a StatisticalProfile from a matrix file.
 
 		Args:
-		    matrix_file (str): The path to the matrix file
+			matrix_file (str): The path to the matrix file
 
 		Returns:
-		    StatisticalProfile: The StatisticalProfile object
+			StatisticalProfile: The StatisticalProfile object
 
 		"""
 		pd, matrix = load_matrix(matrix_file)
@@ -130,11 +130,11 @@ class StatisticalProfile:
 		"""Create a counter of adjacent symbol pairs and their occurrences.
 
 		Args:
-		    text (list[str]): The text to create the counter from.
+			text (list[str]): The text to create the counter from.
 
 		Returns:
-		    Counter[tuple[str, str]]: The counter of adjacent symbol pairs and their
-		        occurrences
+			Counter[tuple[str, str]]: The counter of adjacent symbol pairs and their
+				occurrences
 
 		"""
 		return Counter(zip(text, text[1:], strict=False))
@@ -149,14 +149,14 @@ class StatisticalProfile:
 		"""Construct a matrix from a counter of adjacent symbol pairs.
 
 		Args:
-		    rows (int): The number of rows in the matrix
-		    cols (int): The number of columns in the matrix
-		    data (Counter[tuple[str, str]]): The counter of adjacent symbol pairs and
-		        their occurrences
-		    symbols (list[str]): The symbols to use in the matrix
+			rows (int): The number of rows in the matrix
+			cols (int): The number of columns in the matrix
+			data (Counter[tuple[str, str]]): The counter of adjacent symbol pairs and
+				their occurrences
+			symbols (list[str]): The symbols to use in the matrix
 
 		Returns:
-		    np.ndarray: The constructed matrix as a numpy array
+			np.ndarray: The constructed matrix as a numpy array
 
 		"""
 		matrix = np.zeros((rows, cols), dtype=int)
@@ -177,12 +177,12 @@ class StatisticalProfile:
 		"""Construct a StatisticalProfile from a text sequence.
 
 		Args:
-		    text_sequence (list[str]): The text sequence to construct the
-		        StatisticalProfile from
-		    symbols (list[str]): The symbols to use in the StatisticalProfile
+			text_sequence (list[str]): The text sequence to construct the
+				StatisticalProfile from
+			symbols (list[str]): The symbols to use in the StatisticalProfile
 
 		Returns:
-		    StatisticalProfile: The constructed StatisticalProfile
+			StatisticalProfile: The constructed StatisticalProfile
 
 		"""
 		num_symbols = len(symbols)
@@ -206,12 +206,13 @@ class StatisticalProfile:
 		"""Construct a StatisticalProfile from a Cipher object.
 
 		Args:
-		    cipher (Cipher): The Cipher object to construct the StatisticalProfile from.
-		    save (bool, optional): Whether to save the matrix to a file. Defaults to False.
-		    no_cache (bool, optional): Whether to skip the cache. Defaults to False.
+			cipher (Cipher): The Cipher object to construct the StatisticalProfile from.
+			save (bool, optional): Whether to save the matrix to a file.
+				Defaults to False.
+			no_cache (bool, optional): Whether to skip the cache. Defaults to False.
 
 		Returns:
-		    StatisticalProfile: The constructed StatisticalProfile.
+			StatisticalProfile: The constructed StatisticalProfile.
 
 		"""
 		if not no_cache and matrix_exists(cipher.name):
@@ -243,12 +244,12 @@ class StatisticalProfile:
 		it builds from the NLTK corpus and optionally saves the new matrix.
 
 		Args:
-		    save (bool, optional): Whether to save the matrix to a file. Defaults to
-		        True.
-		    no_cache (bool, optional): Whether to skip the cache. Defaults to False.
+			save (bool, optional): Whether to save the matrix to a file. Defaults to
+				True.
+			no_cache (bool, optional): Whether to skip the cache. Defaults to False.
 
 		Returns:
-		    StatisticalProfile: The constructed StatisticalProfile.
+			StatisticalProfile: The constructed StatisticalProfile.
 
 		"""
 		matrix_file = "english-matrix.csv"
@@ -288,7 +289,7 @@ class StatisticalProfile:
 		"""Convert the StatisticalProfile to a JSON object.
 
 		Returns:
-		    dict[str, Any]: The JSON object representing the StatisticalProfile
+			dict[str, Any]: The JSON object representing the StatisticalProfile
 
 		"""
 		return {
@@ -301,10 +302,10 @@ class StatisticalProfile:
 		"""Load a StatisticalProfile from a JSON object.
 
 		Args:
-		    json (dict[str, Any]): The JSON object to load the StatisticalProfile from
+			json (dict[str, Any]): The JSON object to load the StatisticalProfile from
 
 		Returns:
-		    StatisticalProfile: The StatisticalProfile object
+			StatisticalProfile: The StatisticalProfile object
 
 		"""
 		p_raw = np.array(json["p_raw"])

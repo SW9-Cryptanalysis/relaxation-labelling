@@ -8,7 +8,8 @@ log = get_colored_logger(__name__)
 
 
 def save_results_as_latex(
-	results: list["SolverAnalytics"], name: str = "result_table",
+	results: list["SolverAnalytics"],
+	name: str = "result_table",
 ) -> None:
 	"""Save results as a LaTeX table.
 
@@ -52,18 +53,19 @@ def save_results_as_latex(
 	try:
 		if not os.path.exists(RESULT_PATH):
 			os.makedirs(RESULT_PATH, exist_ok=True)
-			
+
 		full_path = os.path.join(RESULT_PATH, f"{name}.txt")
 		log.debug(f"Saving table to {full_path}")
-		
+
 		with open(full_path, "w") as f:
 			f.write(table_str)
-			
+
 	except Exception as e:
-		# Catch any file system or permission error and log it clearly
-		log.error(f"FATAL ERROR: Could not save LaTeX table to disk. Permission denied or path error. Error: {e}")
-		# Log the table content so the user can copy-paste it manually if disk access fails
-		print("\n[Copy-Paste Fallback LaTeX Content Below]:\n" + table_str + "\n")
+		log.error(
+			f"FATAL ERROR: Could not save LaTeX table to disk."
+			f" Permission denied or path error. Error: {e}",
+		)
+		log.info("\n[Copy-Paste Fallback LaTeX Content Below]:\n" + table_str + "\n")
 
 
 def indent(text: str, level: int = 1) -> str:

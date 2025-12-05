@@ -9,8 +9,6 @@ from utils.logging import get_colored_logger
 from utils.data import load_ciphers_list
 from latex import save_results_as_latex
 from utils.constants import RESULT_PATH_MCMC
-import os
-import json
 
 
 log = get_colored_logger("Relaxation Solver")
@@ -151,8 +149,8 @@ def itereate_ciphers(
 
 if __name__ == "__main__":
 	ciphers = load_ciphers_list()
- 
-	results = itereate_ciphers(ciphers, relaxation=False, iters=50000)	
+
+	results = itereate_ciphers(ciphers, relaxation=False, iters=50000)
 	save_results_as_latex(results, "mcmc-results-no-relaxation.tex")
 	results = itereate_ciphers(ciphers, relaxation=True, iters=50000)
 	save_results_as_latex(results, "mcmc-results-relaxation.tex")
