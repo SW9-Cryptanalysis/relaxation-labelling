@@ -87,7 +87,7 @@ class AnsiColorFormatter(logging.Formatter):
 
 def get_colored_logger(
 	name: str,
-	level: int = (LOG_LEVEL_TO_INT[os.getenv("LOG_LEVEL", "")] or logging.DEBUG),
+	level: int | None = None,
 ) -> logging.Logger:
 	"""Create and configures a logger with the AnsiColorFormatter.
 
@@ -99,6 +99,11 @@ def get_colored_logger(
 		logging.Logger: A color formatted logger ready for use
 
 	"""
+	if level is None:
+		env_level_str = os.getenv("LOG_LEVEL", "DEBUG").upper()
+		
+		level = LOG_LEVEL_TO_INT.get(env_level_str, logging.DEBUG)
+
 	logger = logging.getLogger(name)
 	logger.setLevel(level)
 
