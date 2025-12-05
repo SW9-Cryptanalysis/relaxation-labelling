@@ -1,5 +1,6 @@
 from classes.mcmc_solver import McmcSolver
 from classes.relaxation_solver import RelaxationSolver
+from classes.ngram_scorer import NGramScorer
 from classes.solver import Solver
 from utils.logging import get_colored_logger
 import numpy as np
@@ -45,10 +46,27 @@ class SolverAnalytics:
 		self.solver = solver
 		self.eng_profile = solver.eng_profile
 		self.cip_profile = solver.cip_profile
+		self._scorer = NGramScorer(4, "english_quadgrams.txt")
 
 		self._valid_key: dict[int, int] | None = None
 		self._mer: float | None = None
 		self._ser: float | None = None
+		self._score: float | None = None
+  
+	@property
+	def score(self) -> float:
+		"""Return the n-gram score of the cipher.
+  
+		Returns:
+		    float: The n-gram score of the cipher
+  
+		"""
+		if self.solver.decoded is None:
+			log.warning("Cannot calculate score. Decoded not yet calculated.")
+			return np.nan
+		if self._score is None:
+			self._score = self._scorer.score(self.solver.decoded)
+		return self._score
 
 	@property
 	def valid_key(self) -> dict[int, int]:
@@ -177,7 +195,11 @@ class SolverAnalytics:
 
 		"""
 		return {
-			"solver": self.solver.__json__(),
+			"mer": self.mer,
+			"ser": self.ser,
+			"time": self.solver.time,
+			"cipher": self.solver.cipher.name,
+			"decoded": self.solver.decoded,
 		}
 
 	@staticmethod
