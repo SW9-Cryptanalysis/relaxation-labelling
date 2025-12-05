@@ -1,8 +1,5 @@
 import pytest
 import numpy as np
-import json
-import os
-from typing import Any
 
 from classes.solver_analytics import SolverAnalytics
 from classes.solver import Solver
