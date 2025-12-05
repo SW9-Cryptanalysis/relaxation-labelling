@@ -101,7 +101,7 @@ def get_colored_logger(
 	"""
 	if level is None:
 		env_level_str = os.getenv("LOG_LEVEL", "DEBUG").upper()
-		
+
 		level = LOG_LEVEL_TO_INT.get(env_level_str, logging.DEBUG)
 
 	logger = logging.getLogger(name)
