@@ -64,7 +64,8 @@ def save_matrix(
 		os.makedirs(DATA_PATH)
 
 	df = pd.DataFrame(data, index=index, columns=columns)
-	df.to_csv(DATA_PATH + path)
+	path = os.path.join(DATA_PATH, path)
+	df.to_csv(path)
 	log.debug(f"Saved {data.shape[0]}x{data.shape[1]} matrix to '{DATA_PATH + path}'")
 
 
