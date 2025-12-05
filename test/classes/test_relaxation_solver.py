@@ -1,7 +1,5 @@
 import pytest
 import numpy as np
-import time
-from typing import Any
 
 
 from classes.relaxation_solver import RelaxationSolver, SolverConfig

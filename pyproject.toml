@@ -30,6 +30,7 @@ exclude_also = [
     "if __name__ == .__main__.:",
 	"import",
 	"from",
+	"@(abc\\.)?abstractmethod",
 ]
 
 [tool.ruff]

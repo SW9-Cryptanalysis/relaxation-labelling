@@ -1,6 +1,4 @@
 import pytest
-import sys
-from typing import Any
 
 
 from main import solve_cipher
@@ -116,7 +114,7 @@ def test_solve_cipher_failure_exit(mock_dependencies, mocker, caplog):
 
 	mock_exit = mocker.patch("builtins.exit")
 	mock_log = mocker.patch("main.log.error")
-	
+
 	solve_cipher(cipher_name="test_cipher", restarts=0)
 
 	assert mock_log.call_count == 1
