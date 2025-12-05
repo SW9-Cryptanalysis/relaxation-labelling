@@ -5,7 +5,7 @@ from classes.solver_config import SolverConfig
 import time
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
-    from classes import StatisticalProfile, Cipher
+	from classes import StatisticalProfile, Cipher
 
 from .solver import Solver
 
@@ -92,6 +92,9 @@ class RelaxationSolver(Solver):
 					self.cip_profile.unigram_frequencies[i]
 					* self.eng_profile.unigram_frequencies[j]
 				)
+	
+		noise = np.random.uniform(0, 0.05, self.p_map.shape) 
+		self.p_map += noise
 
 		self.p_map = self.p_map / (
 			self.p_map.sum(axis=1, keepdims=True) + self.config.epsilon
