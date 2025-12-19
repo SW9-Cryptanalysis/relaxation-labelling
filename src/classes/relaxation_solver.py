@@ -5,7 +5,7 @@ from classes.solver_config import SolverConfig
 import time
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
-    from classes import StatisticalProfile, Cipher
+	from classes import StatisticalProfile, Cipher
 
 from .solver import Solver
 
@@ -93,6 +93,9 @@ class RelaxationSolver(Solver):
 					* self.eng_profile.unigram_frequencies[j]
 				)
 
+		noise = np.random.uniform(0, 0.05, self.p_map.shape)
+		self.p_map += noise
+
 		self.p_map = self.p_map / (
 			self.p_map.sum(axis=1, keepdims=True) + self.config.epsilon
 		)
@@ -151,7 +154,7 @@ class RelaxationSolver(Solver):
 
 			self.p_map = p_map_new
 
-			if i % 50 == 0 and valid_key:
+			if i % 50 == 0 and valid_key: # pragma: no cover
 				temp_guesses = np.argmax(self.p_map, axis=1)
 				correct = sum(1 for c, e in valid_key.items() if temp_guesses[c] == e)
 				log.debug(f"Iter {i:3d}: Acc {100 * correct / len(valid_key):.1f}%")

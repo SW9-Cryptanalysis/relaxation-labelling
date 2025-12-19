@@ -5,7 +5,7 @@ from collections import Counter
 import nltk
 import string
 from utils.logging import get_colored_logger
-from typing import Any
+from typing import Any, Optional
 
 log = get_colored_logger("Relaxation Solver")
 
@@ -26,20 +26,22 @@ class StatisticalProfile:
 			StatisticalProfile.
 
 	Methods:
-        from_matrix_file(matrix_file: str) -> StatisticalProfile: Load a
-            StatisticalProfile from a matrix file.
-        from_text(text_sequence: list[str], symbols: list[str]) -> StatisticalProfile:
-            Construct a StatisticalProfile from a text sequence.
-        from_cipher(cipher: Cipher, *, save: bool = False, no_cache: bool = False)
-            -> StatisticalProfile: Construct a StatisticalProfile from a Cipher object.
-        from_english_corpus(*, save: bool = True, no_cache: bool = False)
-            -> StatisticalProfile: Construct the English StatisticalProfile from the
-            NLTK brown corpus.
-        __json__() -> dict[str, Any]: Convert the StatisticalProfile to a JSON object.
-        __from_json__(json: dict[str, Any]) -> StatisticalProfile: Load a
-            StatisticalProfile from a JSON object.
+		from_matrix_file(matrix_file: str) -> StatisticalProfile: Load a
+			StatisticalProfile from a matrix file.
+		from_text(text_sequence: list[str], symbols: list[str]) -> StatisticalProfile:
+			Construct a StatisticalProfile from a text sequence.
+		from_cipher(cipher: Cipher, *, save: bool = False, no_cache: bool = False)
+			-> StatisticalProfile: Construct a StatisticalProfile from a Cipher object.
+		from_english_corpus(*, save: bool = True, no_cache: bool = False)
+			-> StatisticalProfile: Construct the English StatisticalProfile from the
+			NLTK brown corpus.
+		__json__() -> dict[str, Any]: Convert the StatisticalProfile to a JSON object.
+		__from_json__(json: dict[str, Any]) -> StatisticalProfile: Load a
+			StatisticalProfile from a JSON object.
 
 	"""
+
+	_english_profile_cache: Optional["StatisticalProfile"] = None
 
 	def __init__(self, p_raw: np.ndarray, symbols: list[str]) -> None:
 		"""Initialize a StatisticalProfile.
@@ -101,9 +103,12 @@ class StatisticalProfile:
 		p_sums = self.p_raw.sum(axis=1)
 		return p_sums / p_sums.sum()
 
-	def _normalize_matrix(self, p: np.ndarray, axis: int =0) -> np.ndarray:
-		p = p / p.sum(axis=axis, keepdims=True)
-		return p
+	def _normalize_matrix(self, p: np.ndarray, axis: int = 0) -> np.ndarray:
+		# Prevent division by zero with a small epsilon or safe division
+		sums = p.sum(axis=axis, keepdims=True)
+		# Avoid division by zero warnings/errors
+		sums[sums == 0] = 1.0
+		return p / sums
 
 	@staticmethod
 	def from_matrix_file(matrix_file: str) -> "StatisticalProfile":
@@ -122,21 +127,24 @@ class StatisticalProfile:
 
 	@staticmethod
 	def _get_bigrams(text: list[str]) -> Counter[tuple[str, str]]:
-		"""Create a counter of adjacent symbol pairs and their occurences.
+		"""Create a counter of adjacent symbol pairs and their occurrences.
 
 		Args:
 			text (list[str]): The text to create the counter from.
 
 		Returns:
 			Counter[tuple[str, str]]: The counter of adjacent symbol pairs and their
-				occurences
+				occurrences
 
 		"""
 		return Counter(zip(text, text[1:], strict=False))
 
 	@staticmethod
 	def _construct_matrix(
-		rows: int, cols: int, data: Counter[tuple[str, str]], symbols: list[str],
+		rows: int,
+		cols: int,
+		data: Counter[tuple[str, str]],
+		symbols: list[str],
 	) -> np.ndarray:
 		"""Construct a matrix from a counter of adjacent symbol pairs.
 
@@ -144,7 +152,7 @@ class StatisticalProfile:
 			rows (int): The number of rows in the matrix
 			cols (int): The number of columns in the matrix
 			data (Counter[tuple[str, str]]): The counter of adjacent symbol pairs and
-				their occurences
+				their occurrences
 			symbols (list[str]): The symbols to use in the matrix
 
 		Returns:
@@ -156,9 +164,11 @@ class StatisticalProfile:
 		sym_to_idx = {str(sym): idx for idx, sym in enumerate(symbols)}
 
 		for (i, j), count in data.items():
-			row = sym_to_idx[i]
-			col = sym_to_idx[j]
-			matrix[row, col] = count
+			# Ensure symbols exist in our map to avoid KeyErrors
+			if i in sym_to_idx and j in sym_to_idx:
+				row = sym_to_idx[i]
+				col = sym_to_idx[j]
+				matrix[row, col] = count
 
 		return matrix
 
@@ -178,25 +188,28 @@ class StatisticalProfile:
 		num_symbols = len(symbols)
 		bigrams = StatisticalProfile._get_bigrams(text_sequence)
 		matrix = StatisticalProfile._construct_matrix(
-			num_symbols, num_symbols, bigrams, symbols,
+			num_symbols,
+			num_symbols,
+			bigrams,
+			symbols,
 		)
 
 		return StatisticalProfile(matrix, symbols)
 
 	@staticmethod
 	def from_cipher(
-		cipher: Cipher, *, save: bool = False, no_cache: bool = False,
+		cipher: Cipher,
+		*,
+		save: bool = False,
+		no_cache: bool = False,
 	) -> "StatisticalProfile":
 		"""Construct a StatisticalProfile from a Cipher object.
 
 		Args:
 			cipher (Cipher): The Cipher object to construct the StatisticalProfile from.
-			save (bool, optional): Whether to save the matrix to a file. If overwrite is
-				False, and the file exists, this will load the matrix from the file and
-				override the save argument. Defaults to False.
-			no_cache (bool, optional): Whether to skip the cache. If False, and the
-				matrix exists in the cache, this will load the matrix from the cache
-				and override the save argument. Defaults to False.
+			save (bool, optional): Whether to save the matrix to a file.
+				Defaults to False.
+			no_cache (bool, optional): Whether to skip the cache. Defaults to False.
 
 		Returns:
 			StatisticalProfile: The constructed StatisticalProfile.
@@ -221,13 +234,14 @@ class StatisticalProfile:
 
 	@staticmethod
 	def from_english_corpus(
-		*, save: bool = True, no_cache: bool = False,
+		*,
+		save: bool = True,
 	) -> "StatisticalProfile":
 		"""Construct the English StatisticalProfile from the NLTK brown corpus.
 
-		Handles caching: Tries to load "english_matrix.csv" first. If 'no_cache'
-		is True or the file doesn't exist, it builds from the NLTK corpus
-		and optionally saves the new matrix.
+		Handles caching: Tries to use in-memory cache first. Then tries to load
+		"english_matrix.csv". If 'no_cache' is True or the file doesn't exist,
+		it builds from the NLTK corpus and optionally saves the new matrix.
 
 		Args:
 			save (bool, optional): Whether to save the matrix to a file. Defaults to
@@ -240,10 +254,12 @@ class StatisticalProfile:
 		"""
 		matrix_file = "english-matrix.csv"
 
-		if not no_cache and matrix_exists(matrix_file):
+		if matrix_exists(matrix_file):
 			try:
 				log.debug(f"Cache hit. Loading {matrix_file}...")
-				return StatisticalProfile.from_matrix_file(matrix_file)
+				profile = StatisticalProfile.from_matrix_file(matrix_file)
+				StatisticalProfile._english_profile_cache = profile
+				return profile
 			except Exception as e:
 				log.debug(f"Cache load failed ({e}). Rebuilding...")
 
@@ -264,6 +280,8 @@ class StatisticalProfile:
 		if save:
 			log.debug(f"Saving new English matrix to {matrix_file}...")
 			save_matrix(profile.p_raw, symbols, symbols, matrix_file)
+
+		StatisticalProfile._english_profile_cache = profile
 
 		return profile
 

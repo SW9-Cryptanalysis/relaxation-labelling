@@ -1,5 +1,6 @@
 from classes.mcmc_solver import McmcSolver
 from classes.relaxation_solver import RelaxationSolver
+from classes.ngram_scorer import NGramScorer
 from classes.solver import Solver
 from utils.logging import get_colored_logger
 import numpy as np
@@ -45,10 +46,27 @@ class SolverAnalytics:
 		self.solver = solver
 		self.eng_profile = solver.eng_profile
 		self.cip_profile = solver.cip_profile
+		self._scorer = NGramScorer(4, "english_quadgrams.txt")
 
 		self._valid_key: dict[int, int] | None = None
 		self._mer: float | None = None
 		self._ser: float | None = None
+		self._score: float | None = None
+
+	@property
+	def score(self) -> float:
+		"""Return the n-gram score of the cipher.
+
+		Returns:
+			float: The n-gram score of the cipher
+
+		"""
+		if self.solver.decoded is None:
+			log.warning("Cannot calculate score. Decoded not yet calculated.")
+			return np.nan
+		if self._score is None:
+			self._score = self._scorer.score(self.solver.decoded)
+		return self._score
 
 	@property
 	def valid_key(self) -> dict[int, int]:
@@ -85,7 +103,10 @@ class SolverAnalytics:
 		return self._valid_key
 
 	def _traverse_symbol_list(
-		self, cip_map: dict[str, int], symbol_list: list[str], eng_idx: int,
+		self,
+		cip_map: dict[str, int],
+		symbol_list: list[str],
+		eng_idx: int,
 	) -> None:
 		if not self._valid_key:
 			self._valid_key = {}
@@ -150,7 +171,9 @@ class SolverAnalytics:
 
 		correct = sum(
 			1
-			for d, a in zip(self.solver.decoded, self.solver.cipher.plaintext, strict=True)
+			for d, a in zip(
+				self.solver.decoded, self.solver.cipher.plaintext, strict=True,
+			)
 			if d == a
 		)
 		self._ser = 1.0 - (correct / len(self.solver.decoded))
@@ -163,11 +186,7 @@ class SolverAnalytics:
 			str: The string representation of the SolverAnalytics
 
 		"""
-		return (
-			f"SolverAnalytics {{"
-			f"\n  solver: {self.solver.__str__()}\n"
-			f"}}"
-		)
+		return f"SolverAnalytics {{\n  solver: {self.solver.__str__()}\n}}"
 
 	def __json__(self) -> dict[str, Any]:
 		"""Convert the SolverAnalytics to a JSON object.
@@ -177,7 +196,11 @@ class SolverAnalytics:
 
 		"""
 		return {
-			"solver": self.solver.__json__(),
+			"mer": self.mer,
+			"ser": self.ser,
+			"time": self.solver.time,
+			"cipher": self.solver.cipher.name,
+			"decoded": self.solver.decoded,
 		}
 
 	@staticmethod
@@ -186,6 +209,7 @@ class SolverAnalytics:
 
 		Args:
 			json (dict[str, Any]): The JSON object to load the SolverAnalytics from
+			solver_type (str): The type of solver to load (e.g., "McmcSolver")
 
 		Returns:
 			SolverAnalytics: The SolverAnalytics object
